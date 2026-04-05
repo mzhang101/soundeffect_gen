@@ -1,0 +1,18 @@
+# Environment variables (API keys)
+.env
+
+# Output directories
+output/
+output_new/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
