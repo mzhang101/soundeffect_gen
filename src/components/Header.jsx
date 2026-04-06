@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useGeneration, t } from '../context/GenerationContext';
+import { useTheme } from '../context/ThemeContext';
 import { parseCSV } from '../services/csvParser';
 import { downloadAllAsZip } from '../utils/zipHelper';
 
@@ -11,7 +12,8 @@ const MODELS = [
 export { MODELS };
 
 export default function Header() {
-  const { addBar, importCSV, runAll, clearAll, generationBars, isRunningAll, runAllIndex, logout, toggleLocale, locale } = useGeneration();
+  const { addBar, importCSV, runAll, clearAll, generationBars, isRunningAll, runAllIndex } = useGeneration();
+  const { theme, toggleTheme } = useTheme();
   const fileInputRef = useRef(null);
 
   const completedCount = generationBars.filter(b => b.status === 'complete').length;
@@ -36,12 +38,14 @@ export default function Header() {
           {/* Left: Logo & Status */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[var(--accent-glow)] flex items-center justify-center">
-                <svg className="w-4 h-4 text-[var(--accent-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center shadow-md">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM12 3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
                 </svg>
               </div>
-              <span className="text-base font-medium text-[var(--text-primary)]">{t('soundFxBatcher')}</span>
+              <span className="text-base font-semibold bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">
+                {t('soundFxBatcher')}
+              </span>
             </div>
 
             {/* Status indicator */}
@@ -126,25 +130,23 @@ export default function Header() {
               </button>
             )}
 
-            <div className="w-px h-6 bg-[var(--border-subtle)] mx-2" />
+            <div className="w-px h-6 bg-[var(--border-subtle)] mx-1" />
 
-            {/* Language Toggle */}
+            {/* Theme Toggle */}
             <button
-              onClick={toggleLocale}
-              className="btn btn-secondary text-xs px-3"
-              title="Toggle Language"
+              onClick={toggleTheme}
+              className="btn btn-ghost p-2.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              {locale === 'en' ? '中文' : 'EN'}
-            </button>
-
-            <button
-              onClick={logout}
-              className="btn btn-ghost p-2"
-              title="Logout"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-              </svg>
+              {theme === 'dark' ? (
+                <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+              )}
             </button>
           </div>
         </div>
