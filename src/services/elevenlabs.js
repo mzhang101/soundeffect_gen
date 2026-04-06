@@ -1,10 +1,9 @@
 const PROXY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/generate';
+const USE_MOCK_AUDIO = String(import.meta.env.VITE_USE_MOCK_AUDIO || '').toLowerCase() === 'true';
 
 export async function generateAudio({ text, modelId = 'eleven_text_to_sound_v2', durationSeconds, promptInfluence = 0.3, loop = false }, onProgress) {
-  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-
-  // Fallback to mock if no API key configured
-  if (!apiKey || apiKey === 'your_elevenlabs_api_key') {
+  // Explicit mock mode avoids accidental third-party URLs and CORS issues.
+  if (USE_MOCK_AUDIO) {
     return mockGenerate(text, durationSeconds, onProgress);
   }
 
@@ -17,7 +16,6 @@ export async function generateAudio({ text, modelId = 'eleven_text_to_sound_v2',
       modelId,
       promptInfluence,
       loop,
-      apiKey,
     };
 
     if (durationSeconds && durationSeconds > 0) {
@@ -37,6 +35,9 @@ export async function generateAudio({ text, modelId = 'eleven_text_to_sound_v2',
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      if (response.status === 500 && String(errorData.details || '').includes('ELEVENLABS_API_KEY')) {
+        throw new Error('Server is missing ELEVENLABS_API_KEY. Please configure it in backend environment variables.');
+      }
       throw new Error(`Proxy error: ${response.status} - ${errorData.error || errorData.details || 'Unknown'}`);
     }
 
@@ -68,10 +69,61 @@ async function mockGenerate(text, duration, onProgress) {
     onProgress(Math.round((i / steps) * 100));
   }
 
-  // Return mock audio URL
+  const blob = createMockWavBlob(duration || 5);
+
+  // Return same-origin blob URL so playback/download behave like real generation.
   return {
-    url: 'https://www.soundjay.com/buttons/sounds/button-09a.mp3',
-    blob: null,
-    filename: `sound_${Date.now()}.mp3`
+    url: URL.createObjectURL(blob),
+    blob,
+    filename: `sound_${Date.now()}.wav`
   };
+}
+
+function createMockWavBlob(durationSeconds = 5) {
+  const sampleRate = 44100;
+  const channelCount = 1;
+  const bitsPerSample = 16;
+  const frameCount = Math.max(1, Math.floor(durationSeconds * sampleRate));
+  const byteRate = (sampleRate * channelCount * bitsPerSample) / 8;
+  const blockAlign = (channelCount * bitsPerSample) / 8;
+  const dataSize = frameCount * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  writeAscii(view, 0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeAscii(view, 8, 'WAVE');
+  writeAscii(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channelCount, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
+  writeAscii(view, 36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  // Simple decaying tone as local mock output.
+  const frequency = 440;
+  const amplitude = 0.2;
+  const fadeOutStart = Math.floor(frameCount * 0.9);
+  let offset = 44;
+
+  for (let i = 0; i < frameCount; i++) {
+    const t = i / sampleRate;
+    const envelope = i > fadeOutStart ? Math.max(0, 1 - (i - fadeOutStart) / (frameCount - fadeOutStart)) : 1;
+    const sample = Math.sin(2 * Math.PI * frequency * t) * amplitude * envelope;
+    const pcm = Math.max(-1, Math.min(1, sample)) * 32767;
+    view.setInt16(offset, pcm, true);
+    offset += 2;
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function writeAscii(view, offset, text) {
+  for (let i = 0; i < text.length; i++) {
+    view.setUint8(offset + i, text.charCodeAt(i));
+  }
 }

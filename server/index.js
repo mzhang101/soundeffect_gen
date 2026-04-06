@@ -1,3 +1,5 @@
+/* global process, Buffer */
+
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
@@ -9,6 +11,7 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
 app.use(cors());
 app.use(express.json());
@@ -16,14 +19,17 @@ app.use(express.json());
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/sound-generation';
 
 app.post('/api/generate', async (req, res) => {
-  const { text, modelId, durationSeconds, promptInfluence, loop, apiKey } = req.body;
+  const { text, modelId, durationSeconds, promptInfluence, loop } = req.body;
 
   if (!text) {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  if (!apiKey) {
-    return res.status(400).json({ error: 'API key is required' });
+  if (!ELEVENLABS_API_KEY) {
+    return res.status(500).json({
+      error: 'Server configuration error',
+      details: 'ELEVENLABS_API_KEY is not configured',
+    });
   }
 
   try {
@@ -41,12 +47,12 @@ app.post('/api/generate', async (req, res) => {
       body.loop = true;
     }
 
-    console.log('Proxying request to ElevenLabs:', { text: text.substring(0, 50), ...body, api_key: apiKey.substring(0, 10) + '...' });
+    console.log('Proxying request to ElevenLabs:', { text: text.substring(0, 50), ...body });
 
     const response = await fetch(ELEVENLABS_API_URL, {
       method: 'POST',
       headers: {
-        'xi-api-key': apiKey,
+        'xi-api-key': ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -59,7 +65,9 @@ app.post('/api/generate', async (req, res) => {
       try {
         const errorJson = JSON.parse(errorText);
         errorDetail = errorJson.detail?.message || errorJson.detail || errorText;
-      } catch (e) {}
+      } catch {
+        // Keep raw response text when ElevenLabs returns non-JSON errors.
+      }
       return res.status(response.status).json({
         error: `ElevenLabs API error: ${response.status}`,
         details: errorDetail

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { t } from '../context/GenerationContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -19,8 +19,21 @@ export default function AudioPlayer({ bar }) {
 
   const { theme } = useTheme();
 
+  const isCrossOriginHttpUrl = useCallback((url) => {
+    if (!url || !/^https?:\/\//i.test(url)) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return parsed.origin !== window.location.origin;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Theme-aware colors
-  const colors = theme === 'dark' ? {
+  const colors = useMemo(() => (theme === 'dark' ? {
     bgGradientStart: 'rgba(20, 20, 20, 0.95)',
     bgGradientEnd: 'rgba(15, 15, 15, 0.98)',
     accentPrimary: '#d4a574',
@@ -58,7 +71,7 @@ export default function AudioPlayer({ bar }) {
     containerBgTo: 'rgba(245, 245, 245, 0.95)',
     dividerBorder: 'rgba(26, 26, 26, 0.06)',
     readyDot: '#4ade80',
-  };
+  }), [theme]);
 
   // Draw sleek waveform visualizer
   const drawVisualizer = useCallback(() => {
@@ -235,6 +248,11 @@ export default function AudioPlayer({ bar }) {
     const audio = audioRef.current;
     if (!audio) return;
 
+    if (isCrossOriginHttpUrl(bar.audioUrl)) {
+      alert('This audio URL is hosted on another domain and blocked by browser CORS. Please regenerate audio.');
+      return;
+    }
+
     if (isPlaying) {
       audio.pause();
     } else {
@@ -244,7 +262,7 @@ export default function AudioPlayer({ bar }) {
       }
       audio.play().then(() => startVisualization()).catch(console.error);
     }
-  }, [isPlaying, initAudio, startVisualization]);
+  }, [bar.audioUrl, isCrossOriginHttpUrl, isPlaying, initAudio, startVisualization]);
 
   // Setup audio events
   useEffect(() => {
@@ -255,6 +273,13 @@ export default function AudioPlayer({ bar }) {
     const onLoadedMetadata = () => setDuration(audio.duration);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
+    const onError = () => {
+      if (isCrossOriginHttpUrl(bar.audioUrl)) {
+        alert('Audio playback failed because the source is cross-origin without CORS permission. Please regenerate.');
+        return;
+      }
+      alert('Audio playback failed. Please regenerate this sound.');
+    };
     const onEnded = () => {
       setIsPlaying(false);
       if (animationRef.current) {
@@ -267,6 +292,7 @@ export default function AudioPlayer({ bar }) {
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
+    audio.addEventListener('error', onError);
     audio.addEventListener('ended', onEnded);
 
     return () => {
@@ -274,9 +300,10 @@ export default function AudioPlayer({ bar }) {
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('error', onError);
       audio.removeEventListener('ended', onEnded);
     };
-  }, [drawVisualizer]);
+  }, [bar.audioUrl, drawVisualizer, isCrossOriginHttpUrl]);
 
   // Draw idle visualizer
   useEffect(() => {
@@ -319,6 +346,7 @@ export default function AudioPlayer({ bar }) {
   };
 
   const progress = duration ? (currentTime / duration) * 100 : 0;
+  const audioFormat = (bar.audioName?.split('.').pop() || 'mp3').toUpperCase();
 
   const handleDownload = () => {
     if (!bar.audioUrl) {
@@ -336,9 +364,19 @@ export default function AudioPlayer({ bar }) {
       a.click();
       document.body.removeChild(a);
     } else if (bar.audioUrl.startsWith('http')) {
+      if (isCrossOriginHttpUrl(bar.audioUrl)) {
+        alert('Download blocked: this audio source is on another domain without CORS permission. Please regenerate audio.');
+        return;
+      }
+
       // For HTTP URLs, fetch and download
       fetch(bar.audioUrl)
-        .then(res => res.blob())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.blob();
+        })
         .then(blob => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -361,7 +399,7 @@ export default function AudioPlayer({ bar }) {
       className="relative rounded-xl p-4 border backdrop-blur-sm transition-all duration-300"
       style={{
         background: `linear-gradient(to bottom, ${colors.containerBgFrom}, ${colors.containerBgTo})`,
-        borderColor: colors.borderSubtle,
+        borderColor: isHovering ? colors.borderHover : colors.borderSubtle,
       }}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -476,7 +514,7 @@ export default function AudioPlayer({ bar }) {
             {bar.audioName || bar.title || t('audioReady')}
           </span>
         </div>
-        <span className="text-[10px]" style={{ color: colors.textMuted }}>MP3</span>
+        <span className="text-[10px]" style={{ color: colors.textMuted }}>{audioFormat}</span>
       </div>
     </div>
   );

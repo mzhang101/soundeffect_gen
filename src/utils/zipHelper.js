@@ -1,5 +1,18 @@
 import JSZip from 'jszip';
 
+function isCrossOriginHttpUrl(url) {
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function downloadAllAsZip(bars) {
   const zip = new JSZip();
 
@@ -21,6 +34,12 @@ export async function downloadAllAsZip(bars) {
       zip.file(filename, bar.audioBlob);
       successCount++;
     } else if (bar.audioUrl && bar.audioUrl.startsWith('http')) {
+      if (isCrossOriginHttpUrl(bar.audioUrl)) {
+        failCount++;
+        console.warn(`Skipped cross-origin audio for ${filename}: source does not allow CORS`);
+        continue;
+      }
+
       // Try fetching HTTP URLs
       try {
         const response = await fetch(bar.audioUrl);

@@ -1,16 +1,65 @@
-# React + Vite
+# Sound Effect Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite app with an Express backend proxy for ElevenLabs sound generation.
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Install dependencies:
 
-## React Compiler
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Configure frontend variables in `.env`:
 
-## Expanding the ESLint configuration
+```dotenv
+VITE_API_URL=http://localhost:3001/api/generate
+VITE_USE_MOCK_AUDIO=false
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+VITE_LLM_API_KEY=your_minimax_api_key
+VITE_LLM_API_ENDPOINT=https://api.minimax.chat/v1/text/chatcompletion_v2
+VITE_LLM_MODEL=MiniMax-M2.7
+```
+
+3. Configure backend ElevenLabs key (server-side only):
+
+```bash
+export ELEVENLABS_API_KEY=your_elevenlabs_api_key
+```
+
+4. Start backend:
+
+```bash
+npm run server
+```
+
+5. Start frontend in another terminal:
+
+```bash
+npm run dev
+```
+
+## Environment Variables
+
+Frontend (Vite):
+- `VITE_API_URL`: backend endpoint for generation
+- `VITE_USE_MOCK_AUDIO`: set `true` to use local mock audio blob generation
+- `VITE_LLM_API_KEY`, `VITE_LLM_API_ENDPOINT`, `VITE_LLM_MODEL`: translation settings
+
+Backend (Node/Express):
+- `ELEVENLABS_API_KEY`: required for real audio generation
+
+## Security Notes
+
+- Frontend no longer sends ElevenLabs API keys.
+- Backend reads `ELEVENLABS_API_KEY` from server environment.
+- If an API key was previously stored in frontend variables, rotate it immediately.
+
+## Railway Deployment
+
+Set these variables in Railway service settings:
+
+- `ELEVENLABS_API_KEY` (backend runtime)
+- `NODE_ENV=production`
+
+Use `.env.production` only for frontend build-time `VITE_*` values.
