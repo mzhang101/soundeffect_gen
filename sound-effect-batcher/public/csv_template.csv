@@ -1,0 +1,6 @@
+id,name,description_en,duration_seconds,loop,trigger_time
+S-01,Thunder Claps,Deep thunder with multiple claps of thunder echoing in the distance,2.0,false,0.0
+S-02,Light Switch Click,Crisp mechanical light switch click sound,0.3,false,interaction
+S-03,Door Closing,Heavy wooden door closing with a satisfying thud,1.2,false,door close
+S-04,Footsteps on Wood,Sharp footsteps on hardwood floor,0.8,false,0.5
+S-05,Glass Breaking,Sudden shattering of glass,0.6,false,impact moment
