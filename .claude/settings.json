@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(kill -9 24974)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(git commit -m ':*)",
+      "Bash(rm -rf .gitignore README.md batch_sound_effects.py example_sounds.csv requirements.txt *.csv output output_new sound-effect-batcher)",
+      "Bash(cp -r sound-effect-batcher/* .)",
+      "Bash(git checkout:*)"
+    ],
+    "additionalDirectories": [
+      "/private/tmp"
+    ]
+  }
+}

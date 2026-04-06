@@ -1,42 +1,16 @@
-# Batch Sound Effects Generator
+# React + Vite
 
-使用 ElevenLabs API 批量生成音效的 Python 脚本。
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 安装
+Currently, two official plugins are available:
 
-```bash
-pip install -r requirements.txt
-```
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## 配置
+## React Compiler
 
-创建 `.env` 文件，添加你的 ElevenLabs API Key：
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-```
-ELEVENLABS_API_KEY=your_api_key_here
-```
+## Expanding the ESLint configuration
 
-## 使用方法
-
-### 批量生成
-
-准备一个 CSV 文件，包含以下列：
-- `id` - 音效唯一标识
-- `name` - 音效名称
-- `description_en` - 英文描述
-- `duration_seconds` (可选) - 时长（秒）
-- `loop` (可选) - 是否循环
-
-运行：
-
-```bash
-python batch_sound_effects.py 你的音效列表.csv
-```
-
-### 单个生成
-
-你也可以直接修改脚本中的 `generate_single_sound` 函数来生成单个音效。
-
-## 输出
-
-生成的 MP3 文件会保存在 `output/` 目录下。
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
