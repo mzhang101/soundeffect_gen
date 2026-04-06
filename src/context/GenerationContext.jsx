@@ -65,8 +65,28 @@ function createEmptyBar() {
 
 export function GenerationProvider({ children }) {
   const [savedState, setSavedState] = useLocalStorage('sound-batcher-state', initialState);
-  const [state, dispatch] = useReducer(reducer, savedState);
   const [locale, setLocaleState] = useState(getLocale);
+
+  // Process saved state to handle stale audio data
+  const processedState = useCallback(() => {
+    if (savedState.generationBars && savedState.generationBars.length > 0) {
+      return {
+        ...savedState,
+        generationBars: savedState.generationBars.map(bar => {
+          // If status is 'complete' but no audioUrl, it means page was refreshed
+          // Reset to 'idle' so user knows they need to regenerate
+          if (bar.status === 'complete' && !bar.audioUrl) {
+            return { ...bar, status: 'idle', audioUrl: null, audioBlob: null, audioName: null };
+          }
+          // Always clear audio data on load - blob URLs don't survive refresh
+          return { ...bar, audioUrl: null, audioBlob: null };
+        })
+      };
+    }
+    return savedState;
+  }, [savedState]);
+
+  const [state, dispatch] = useReducer(reducer, processedState());
 
   // Persist state changes (excluding audio data which uses blob URLs that don't persist)
   useEffect(() => {
