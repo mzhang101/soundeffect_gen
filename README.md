@@ -46,6 +46,9 @@ Frontend (Vite):
 - `VITE_USE_MOCK_AUDIO`: set `true` to use local mock audio blob generation
 - `VITE_LLM_API_KEY`, `VITE_LLM_API_ENDPOINT`, `VITE_LLM_MODEL`: translation settings
 
+Production recommendation:
+- Set `VITE_API_URL=/api/generate` so frontend and backend stay same-origin.
+
 Backend (Node/Express):
 - `ELEVENLABS_API_KEY`: required for real audio generation
 

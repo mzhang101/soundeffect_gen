@@ -1,5 +1,30 @@
-const PROXY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/generate';
+const DEV_PROXY_URL = 'http://localhost:3001/api/generate';
+const SAME_ORIGIN_PROXY_PATH = '/api/generate';
+const PROXY_URL = resolveProxyUrl();
 const USE_MOCK_AUDIO = String(import.meta.env.VITE_USE_MOCK_AUDIO || '').toLowerCase() === 'true';
+
+function resolveProxyUrl() {
+  const configured = String(import.meta.env.VITE_API_URL || '').trim();
+
+  if (!configured) {
+    return import.meta.env.DEV ? DEV_PROXY_URL : SAME_ORIGIN_PROXY_PATH;
+  }
+
+  // This app serves frontend and API from the same Railway service in production.
+  if (!import.meta.env.DEV) {
+    try {
+      const parsed = new URL(configured, window.location.origin);
+      if (parsed.origin !== window.location.origin) {
+        console.warn('[audio] Ignoring cross-origin VITE_API_URL in production, using same-origin /api/generate');
+        return SAME_ORIGIN_PROXY_PATH;
+      }
+    } catch {
+      return SAME_ORIGIN_PROXY_PATH;
+    }
+  }
+
+  return configured;
+}
 
 export async function generateAudio({ text, modelId = 'eleven_text_to_sound_v2', durationSeconds, promptInfluence = 0.3, loop = false }, onProgress) {
   // Explicit mock mode avoids accidental third-party URLs and CORS issues.
