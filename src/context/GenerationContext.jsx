@@ -68,7 +68,7 @@ export function GenerationProvider({ children }) {
   const [locale, setLocaleState] = useState(getLocale);
 
   // Process saved state to handle stale audio data
-  const processedState = useCallback(() => {
+  const getProcessedState = () => {
     if (savedState.generationBars && savedState.generationBars.length > 0) {
       return {
         ...savedState,
@@ -84,9 +84,9 @@ export function GenerationProvider({ children }) {
       };
     }
     return savedState;
-  }, [savedState]);
+  };
 
-  const [state, dispatch] = useReducer(reducer, processedState());
+  const [state, dispatch] = useReducer(reducer, getProcessedState());
 
   // Persist state changes (excluding audio data which uses blob URLs that don't persist)
   useEffect(() => {
