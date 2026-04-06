@@ -12,7 +12,7 @@ const MODELS = [
 export { MODELS };
 
 export default function Header() {
-  const { addBar, importCSV, runAll, clearAll, generationBars, isRunningAll, runAllIndex } = useGeneration();
+  const { addBar, importCSV, runAll, clearAll, generationBars, isRunningAll, runAllIndex, toggleLocale, locale } = useGeneration();
   const { theme, toggleTheme } = useTheme();
   const fileInputRef = useRef(null);
 
@@ -131,6 +131,15 @@ export default function Header() {
             )}
 
             <div className="w-px h-6 bg-[var(--border-subtle)] mx-1" />
+
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLocale}
+              className="btn btn-ghost px-3 py-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-sm font-medium"
+              title="Toggle language"
+            >
+              {locale === 'en' ? '中文' : 'EN'}
+            </button>
 
             {/* Theme Toggle */}
             <button

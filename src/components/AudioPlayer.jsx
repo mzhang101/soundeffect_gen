@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { t } from '../context/GenerationContext';
+import { useTheme } from '../context/ThemeContext';
 
 // Premium AudioPlayer with sleek DAW-inspired design
 export default function AudioPlayer({ bar }) {
@@ -15,6 +16,49 @@ export default function AudioPlayer({ bar }) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isHovering, setIsHovering] = useState(false);
+
+  const { theme } = useTheme();
+
+  // Theme-aware colors
+  const colors = theme === 'dark' ? {
+    bgGradientStart: 'rgba(20, 20, 20, 0.95)',
+    bgGradientEnd: 'rgba(15, 15, 15, 0.98)',
+    accentPrimary: '#d4a574',
+    accentSecondary: '#c4a078',
+    accentMuted: 'rgba(212, 165, 116, 0.4)',
+    textPrimary: 'rgba(255, 255, 255, 0.45)',
+    textSecondary: 'rgba(255, 255, 255, 0.3)',
+    textMuted: 'rgba(255, 255, 255, 0.2)',
+    progressBg: 'rgba(255, 255, 255, 0.08)',
+    borderSubtle: 'rgba(212, 165, 116, 0.15)',
+    borderHover: 'rgba(212, 165, 116, 0.25)',
+    btnBg: 'rgba(255, 255, 255, 0.05)',
+    btnBorder: 'rgba(255, 255, 255, 0.08)',
+    btnText: 'rgba(255, 255, 255, 0.5)',
+    containerBgFrom: 'rgba(26, 26, 26, 0.8)',
+    containerBgTo: 'rgba(20, 20, 20, 0.95)',
+    dividerBorder: 'rgba(255, 255, 255, 0.04)',
+    readyDot: '#4ade80',
+  } : {
+    bgGradientStart: 'rgba(250, 250, 250, 0.95)',
+    bgGradientEnd: 'rgba(245, 245, 245, 0.98)',
+    accentPrimary: '#e84932',
+    accentSecondary: '#f36b2e',
+    accentMuted: 'rgba(232, 73, 50, 0.4)',
+    textPrimary: 'rgba(26, 26, 26, 0.45)',
+    textSecondary: 'rgba(26, 26, 26, 0.3)',
+    textMuted: 'rgba(26, 26, 26, 0.2)',
+    progressBg: 'rgba(26, 26, 26, 0.08)',
+    borderSubtle: 'rgba(232, 73, 50, 0.15)',
+    borderHover: 'rgba(232, 73, 50, 0.25)',
+    btnBg: 'rgba(26, 26, 26, 0.04)',
+    btnBorder: 'rgba(26, 26, 26, 0.08)',
+    btnText: 'rgba(26, 26, 26, 0.5)',
+    containerBgFrom: 'rgba(250, 250, 250, 0.8)',
+    containerBgTo: 'rgba(245, 245, 245, 0.95)',
+    dividerBorder: 'rgba(26, 26, 26, 0.06)',
+    readyDot: '#4ade80',
+  };
 
   // Draw sleek waveform visualizer
   const drawVisualizer = useCallback(() => {
@@ -35,8 +79,8 @@ export default function AudioPlayer({ bar }) {
 
     // Background with subtle gradient
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, 'rgba(20, 20, 20, 0.95)');
-    bgGradient.addColorStop(1, 'rgba(15, 15, 15, 0.98)');
+    bgGradient.addColorStop(0, colors.bgGradientStart);
+    bgGradient.addColorStop(1, colors.bgGradientEnd);
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
@@ -45,7 +89,7 @@ export default function AudioPlayer({ bar }) {
     const centerY = height / 2;
 
     // Draw center line
-    ctx.strokeStyle = 'rgba(212, 165, 116, 0.15)';
+    ctx.strokeStyle = colors.accentMuted;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, centerY);
@@ -63,9 +107,9 @@ export default function AudioPlayer({ bar }) {
 
       // Create gradient for each bar
       const gradient = ctx.createLinearGradient(x, y + barHeight, x, y);
-      gradient.addColorStop(0, 'rgba(212, 165, 116, 0.9)');
-      gradient.addColorStop(0.5, 'rgba(212, 165, 116, 0.6)');
-      gradient.addColorStop(1, 'rgba(184, 149, 108, 0.4)');
+      gradient.addColorStop(0, colors.accentPrimary);
+      gradient.addColorStop(0.5, colors.accentMuted);
+      gradient.addColorStop(1, colors.accentMuted);
 
       // Draw rounded bar
       ctx.fillStyle = gradient;
@@ -76,13 +120,13 @@ export default function AudioPlayer({ bar }) {
 
       // Add subtle glow when idle
       if (!isPlaying) {
-        ctx.shadowColor = 'rgba(212, 165, 116, 0.3)';
+        ctx.shadowColor = colors.accentPrimary;
         ctx.shadowBlur = 4;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, colors]);
 
   // Initialize and run visualizer
   const startVisualization = useCallback(() => {
@@ -112,16 +156,18 @@ export default function AudioPlayer({ bar }) {
       analyser.getByteFrequencyData(dataArray);
 
       // Clear with subtle fade
-      ctx.fillStyle = 'rgba(15, 15, 15, 0.85)';
+      ctx.fillStyle = theme === 'dark' ? 'rgba(15, 15, 15, 0.85)' : 'rgba(250, 250, 250, 0.85)';
       ctx.fillRect(0, 0, width, height);
 
       // Draw center line
-      ctx.strokeStyle = 'rgba(212, 165, 116, 0.2)';
+      ctx.strokeStyle = colors.accentPrimary;
+      ctx.globalAlpha = 0.2;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, centerY);
       ctx.lineTo(width, centerY);
       ctx.stroke();
+      ctx.globalAlpha = 1;
 
       for (let i = 0; i < barCount; i++) {
         const value = dataArray[i] || 0;
@@ -134,11 +180,12 @@ export default function AudioPlayer({ bar }) {
         // Dynamic gradient based on intensity
         const gradient = ctx.createLinearGradient(x, y + barHeight, x, y);
         const alpha = 0.5 + normalizedValue * 0.5;
-        gradient.addColorStop(0, `rgba(212, 165, 116, ${alpha})`);
-        gradient.addColorStop(0.4, `rgba(232, 185, 136, ${alpha * 0.8})`);
-        gradient.addColorStop(1, `rgba(184, 149, 108, ${alpha * 0.5})`);
+        gradient.addColorStop(0, colors.accentPrimary);
+        gradient.addColorStop(0.4, colors.accentSecondary);
+        gradient.addColorStop(1, colors.accentMuted);
 
         ctx.fillStyle = gradient;
+        ctx.globalAlpha = alpha;
 
         // Draw rounded bar
         ctx.beginPath();
@@ -148,16 +195,18 @@ export default function AudioPlayer({ bar }) {
 
         // Glow effect for active bars
         if (normalizedValue > 0.3) {
-          ctx.shadowColor = 'rgba(212, 165, 116, 0.5)';
+          ctx.globalAlpha = 1;
+          ctx.shadowColor = colors.accentPrimary;
           ctx.shadowBlur = 6 * normalizedValue;
           ctx.fill();
           ctx.shadowBlur = 0;
         }
       }
+      ctx.globalAlpha = 1;
     };
 
     drawFrame();
-  }, []);
+  }, [theme, colors]);
 
   // Initialize audio context
   const initAudio = useCallback(() => {
@@ -272,19 +321,48 @@ export default function AudioPlayer({ bar }) {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   const handleDownload = () => {
-    if (!bar.audioUrl) return;
-    const a = document.createElement('a');
-    a.href = bar.audioUrl;
-    a.download = bar.audioName || `${bar.title || 'sound'}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (!bar.audioUrl) {
+      alert('Audio not available. Please regenerate.');
+      return;
+    }
+
+    // Check if it's a blob URL that's no longer valid
+    if (bar.audioUrl.startsWith('blob:')) {
+      // Verify the blob still exists by trying to create a new link
+      const a = document.createElement('a');
+      a.href = bar.audioUrl;
+      a.download = bar.audioName || `${bar.title || 'sound'}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else if (bar.audioUrl.startsWith('http')) {
+      // For HTTP URLs, fetch and download
+      fetch(bar.audioUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = bar.audioName || `${bar.title || 'sound'}.mp3`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+          alert('Audio download failed. The page may have been refreshed after generation.');
+        });
+    }
   };
 
   return (
     <div
       ref={containerRef}
-      className="relative bg-gradient-to-b from-[rgba(26,26,26,0.8)] to-[rgba(20,20,20,0.95)] rounded-xl p-4 border border-[rgba(212,165,116,0.15)] backdrop-blur-sm transition-all duration-300 hover:border-[rgba(212,165,116,0.25)]"
+      className="relative rounded-xl p-4 border backdrop-blur-sm transition-all duration-300"
+      style={{
+        background: `linear-gradient(to bottom, ${colors.containerBgFrom}, ${colors.containerBgTo})`,
+        borderColor: colors.borderSubtle,
+      }}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
@@ -303,52 +381,64 @@ export default function AudioPlayer({ bar }) {
         {/* Play/Pause - centered in button */}
         <button
           onClick={togglePlay}
-          className="group w-9 h-9 rounded-full bg-gradient-to-br from-[#d4a574] to-[#b8956c] flex items-center justify-center transition-all duration-200 hover:from-[#e0b585] hover:to-[#c4a078] hover:shadow-lg hover:shadow-[rgba(212,165,116,0.3)] active:scale-95 flex-shrink-0"
+          className="group w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 flex-shrink-0"
+          style={{
+            background: `linear-gradient(135deg, ${colors.accentPrimary}, ${colors.accentSecondary})`,
+            boxShadow: `0 2px 8px ${colors.accentPrimary}40`,
+          }}
         >
           {isPlaying ? (
-            <svg className="w-3.5 h-3.5 text-[#1a1a1a]" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5" style={{ color: theme === 'dark' ? '#1a1a1a' : '#ffffff' }} fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
             </svg>
           ) : (
-            <svg className="w-3.5 h-3.5 text-[#1a1a1a] translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 translate-x-0.5" style={{ color: theme === 'dark' ? '#1a1a1a' : '#ffffff' }} fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z"/>
             </svg>
           )}
         </button>
 
         {/* Time */}
-        <div className="font-mono text-[11px] text-[rgba(255,255,255,0.45)] tabular-nums w-9 flex-shrink-0">
+        <div className="font-mono text-[11px] tabular-nums w-9 flex-shrink-0" style={{ color: colors.textPrimary }}>
           {formatTime(currentTime)}
         </div>
 
         {/* Progress bar */}
         <div
-          className="flex-1 group relative h-1 bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer overflow-hidden"
+          className="flex-1 group relative h-1 rounded-full cursor-pointer overflow-hidden"
+          style={{ backgroundColor: colors.progressBg }}
           onClick={handleSeek}
         >
           {/* Progress fill */}
           <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#d4a574] to-[#c4a078] rounded-full transition-all duration-100"
-            style={{ width: `${progress}%` }}
+            className="absolute top-0 left-0 h-full rounded-full transition-all duration-100"
+            style={{
+              width: `${progress}%`,
+              background: `linear-gradient(to right, ${colors.accentPrimary}, ${colors.accentSecondary})`,
+            }}
           />
           {/* Glow dot */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#d4a574] rounded-full shadow-[0_0_6px_rgba(212,165,116,0.6)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-            style={{ left: `calc(${progress}% - 5px)` }}
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            style={{
+              left: `calc(${progress}% - 5px)`,
+              backgroundColor: colors.accentPrimary,
+              boxShadow: `0 0 6px ${colors.accentPrimary}`,
+            }}
           />
         </div>
 
         {/* Duration */}
-        <div className="font-mono text-[11px] text-[rgba(255,255,255,0.3)] tabular-nums w-9 text-right flex-shrink-0">
+        <div className="font-mono text-[11px] tabular-nums w-9 text-right flex-shrink-0" style={{ color: colors.textSecondary }}>
           {formatTime(duration)}
         </div>
 
         {/* Volume - compact */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <svg className="w-3.5 h-3.5 text-[rgba(255,255,255,0.35)]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" style={{ color: colors.textPrimary }} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
             <path d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/>
           </svg>
-          <div className="w-12 h-0.5 bg-[rgba(255,255,255,0.08)] rounded-full overflow-hidden">
+          <div className="w-12 h-0.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.progressBg }}>
             <input
               type="range"
               min="0"
@@ -356,7 +446,8 @@ export default function AudioPlayer({ bar }) {
               step="0.05"
               value={volume}
               onChange={handleVolume}
-              className="w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d4a574] [&::-webkit-slider-thumb]:shadow-[0_0_3px_rgba(212,165,116,0.5)]"
+              className="w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full"
+              style={{ '--thumb-bg': colors.accentPrimary, '--thumb-shadow': `0 0 3px ${colors.accentPrimary}` }}
             />
           </div>
         </div>
@@ -364,21 +455,28 @@ export default function AudioPlayer({ bar }) {
         {/* Download */}
         <button
           onClick={handleDownload}
-          className="px-3 py-1.5 rounded-md bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.5)] text-[11px] font-medium transition-all duration-200 hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.15)] hover:text-white active:scale-95 flex-shrink-0"
+          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 active:scale-95 flex-shrink-0"
+          style={{
+            backgroundColor: colors.btnBg,
+            borderColor: colors.btnBorder,
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            color: colors.btnText,
+          }}
         >
           {t('downloadAudio')}
         </button>
       </div>
 
       {/* File name - compact */}
-      <div className="mt-2 pt-2 border-t border-[rgba(255,255,255,0.04)] flex items-center justify-between">
+      <div className="mt-2 pt-2 flex items-center justify-between" style={{ borderTopColor: colors.dividerBorder, borderTopWidth: '1px', borderTopStyle: 'solid' }}>
         <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse" />
-          <span className="text-[11px] text-[rgba(255,255,255,0.35)] truncate max-w-[180px]">
+          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: colors.readyDot }} />
+          <span className="text-[11px] truncate max-w-[180px]" style={{ color: colors.textPrimary }}>
             {bar.audioName || bar.title || t('audioReady')}
           </span>
         </div>
-        <span className="text-[10px] text-[rgba(255,255,255,0.2)]">MP3</span>
+        <span className="text-[10px]" style={{ color: colors.textMuted }}>MP3</span>
       </div>
     </div>
   );

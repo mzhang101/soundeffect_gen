@@ -68,11 +68,17 @@ export function GenerationProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, savedState);
   const [locale, setLocaleState] = useState(getLocale);
 
-  // Persist state changes
+  // Persist state changes (excluding audio data which uses blob URLs that don't persist)
   useEffect(() => {
+    // Filter out audioUrl and audioBlob before saving - blob URLs don't survive page refresh
+    const barsToSave = state.generationBars.map(bar => ({
+      ...bar,
+      audioUrl: null,
+      audioBlob: null,
+    }));
     setSavedState({
       isAuthenticated: state.isAuthenticated,
-      generationBars: state.generationBars,
+      generationBars: barsToSave,
     });
   }, [state.isAuthenticated, state.generationBars, setSavedState]);
 
