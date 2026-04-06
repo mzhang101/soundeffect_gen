@@ -96,11 +96,11 @@ export function GenerationProvider({ children }) {
       audioUrl: null,
       audioBlob: null,
     }));
+    // Don't persist isAuthenticated - require login each visit
     setSavedState({
-      isAuthenticated: state.isAuthenticated,
       generationBars: barsToSave,
     });
-  }, [state.isAuthenticated, state.generationBars, setSavedState]);
+  }, [state.generationBars, setSavedState]);
 
   const login = useCallback(() => dispatch({ type: 'LOGIN' }), []);
   const logout = useCallback(() => {

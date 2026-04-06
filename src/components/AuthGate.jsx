@@ -90,12 +90,6 @@ export default function AuthGate() {
             </button>
           </form>
 
-          {/* Demo hint */}
-          <div className="mt-6 pt-6 border-t border-[var(--border-subtle)]">
-            <p className="text-xs text-[var(--text-muted)] text-center">
-              {t('demoAccount')} <span className="text-[var(--text-secondary)]">admin</span> / <span className="text-[var(--text-secondary)]">123456</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>
