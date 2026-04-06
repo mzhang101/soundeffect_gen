@@ -11,7 +11,28 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+const ELEVENLABS_KEY_ENV_CANDIDATES = [
+  'ELEVENLABS_API_KEY',
+  'ELEVEN_LABS_API_KEY',
+  'VITE_ELEVENLABS_API_KEY',
+];
+
+function resolveElevenLabsConfig() {
+  for (const name of ELEVENLABS_KEY_ENV_CANDIDATES) {
+    const value = String(process.env[name] || '').trim();
+    if (value && !value.startsWith('your_')) {
+      return {
+        key: value,
+        source: name,
+      };
+    }
+  }
+
+  return {
+    key: '',
+    source: null,
+  };
+}
 
 app.use(cors());
 app.use(express.json());
@@ -20,12 +41,13 @@ const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/sound-generation';
 
 app.post('/api/generate', async (req, res) => {
   const { text, modelId, durationSeconds, promptInfluence, loop } = req.body;
+  const { key: elevenLabsApiKey, source: keySource } = resolveElevenLabsConfig();
 
   if (!text) {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  if (!ELEVENLABS_API_KEY) {
+  if (!elevenLabsApiKey) {
     return res.status(500).json({
       error: 'Server configuration error',
       details: 'ELEVENLABS_API_KEY is not configured',
@@ -47,12 +69,16 @@ app.post('/api/generate', async (req, res) => {
       body.loop = true;
     }
 
-    console.log('Proxying request to ElevenLabs:', { text: text.substring(0, 50), ...body });
+    console.log('Proxying request to ElevenLabs:', {
+      text: text.substring(0, 50),
+      keySource,
+      ...body,
+    });
 
     const response = await fetch(ELEVENLABS_API_URL, {
       method: 'POST',
       headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
+        'xi-api-key': elevenLabsApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -91,7 +117,14 @@ app.post('/api/generate', async (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const { key: elevenLabsApiKey, source: keySource } = resolveElevenLabsConfig();
+
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    hasElevenLabsKey: Boolean(elevenLabsApiKey),
+    keySource,
+  });
 });
 
 // Serve static files in production
@@ -107,4 +140,11 @@ if (isProduction) {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+
+  const { key: elevenLabsApiKey, source: keySource } = resolveElevenLabsConfig();
+  if (elevenLabsApiKey) {
+    console.log(`[config] ElevenLabs key loaded from ${keySource}.`);
+  } else {
+    console.warn('[config] Missing ElevenLabs key. Set ELEVENLABS_API_KEY in server environment variables.');
+  }
 });
