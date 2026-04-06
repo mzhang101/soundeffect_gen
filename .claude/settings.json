@@ -6,7 +6,8 @@
       "Bash(git commit -m ':*)",
       "Bash(rm -rf .gitignore README.md batch_sound_effects.py example_sounds.csv requirements.txt *.csv output output_new sound-effect-batcher)",
       "Bash(cp -r sound-effect-batcher/* .)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)"
     ],
     "additionalDirectories": [
       "/private/tmp"
