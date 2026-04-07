@@ -38,14 +38,14 @@ app.use(cors());
 app.use(express.json());
 
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/sound-generation';
-const MINIMAX_API_URL = process.env.MINIMAX_API_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2';
-const MINIMAX_MODEL = process.env.MINIMAX_MODEL || 'MiniMax-M2.7';
+const MINIMAX_API_URL = process.env.VITE_LLM_API_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2';
+const MINIMAX_MODEL = process.env.VITE_LLM_MODEL || 'MiniMax-M2.7';
 const SYSTEM_PROMPT = '你是一个专业的游戏音效翻译助手，将中文翻译成简洁的英文音效描述，用于AI音频生成。只需返回英文描述，不要解释。';
 
 // MiniMax translation endpoint
 app.post('/api/translate', async (req, res) => {
   const { text } = req.body;
-  const minimaxApiKey = process.env.MINIMAX_API_KEY;
+  const minimaxApiKey = process.env.VITE_LLM_API_KEY;
 
   if (!text) {
     return res.status(400).json({ error: 'Text is required' });
@@ -54,7 +54,7 @@ app.post('/api/translate', async (req, res) => {
   if (!minimaxApiKey || minimaxApiKey.startsWith('your_')) {
     return res.status(500).json({
       error: 'Server configuration error',
-      details: 'MINIMAX_API_KEY is not configured',
+      details: 'VITE_LLM_API_KEY is not configured',
     });
   }
 
@@ -178,12 +178,14 @@ app.post('/api/generate', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   const { key: elevenLabsApiKey, source: keySource } = resolveElevenLabsConfig();
+  const minimaxKey = process.env.VITE_LLM_API_KEY || '';
 
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     hasElevenLabsKey: Boolean(elevenLabsApiKey),
     keySource,
+    hasMinimaxKey: Boolean(minimaxKey && !minimaxKey.startsWith('your_')),
   });
 });
 
@@ -206,5 +208,12 @@ app.listen(PORT, () => {
     console.log(`[config] ElevenLabs key loaded from ${keySource}.`);
   } else {
     console.warn('[config] Missing ElevenLabs key. Set ELEVENLABS_API_KEY in server environment variables.');
+  }
+
+  const minimaxKey = process.env.VITE_LLM_API_KEY || '';
+  if (minimaxKey && !minimaxKey.startsWith('your_')) {
+    console.log('[config] MiniMax key loaded.');
+  } else {
+    console.warn('[config] Missing MiniMax key. Set VITE_LLM_API_KEY in server environment variables.');
   }
 });
