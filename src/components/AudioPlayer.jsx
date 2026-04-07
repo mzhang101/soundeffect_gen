@@ -359,7 +359,7 @@ export default function AudioPlayer({ bar }) {
       // Verify the blob still exists by trying to create a new link
       const a = document.createElement('a');
       a.href = bar.audioUrl;
-      a.download = bar.audioName || `${bar.title || 'sound'}.mp3`;
+      a.download = `${bar.title || bar.audioName || 'sound'}.mp3`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -381,7 +381,7 @@ export default function AudioPlayer({ bar }) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = bar.audioName || `${bar.title || 'sound'}.mp3`;
+          a.download = `${bar.title || bar.audioName || 'sound'}.mp3`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
