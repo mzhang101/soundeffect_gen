@@ -38,6 +38,66 @@ app.use(cors());
 app.use(express.json());
 
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/sound-generation';
+const MINIMAX_API_URL = process.env.MINIMAX_API_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2';
+const MINIMAX_MODEL = process.env.MINIMAX_MODEL || 'MiniMax-M2.7';
+const SYSTEM_PROMPT = '你是一个专业的游戏音效翻译助手，将中文翻译成简洁的英文音效描述，用于AI音频生成。只需返回英文描述，不要解释。';
+
+// MiniMax translation endpoint
+app.post('/api/translate', async (req, res) => {
+  const { text } = req.body;
+  const minimaxApiKey = process.env.MINIMAX_API_KEY;
+
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
+  }
+
+  if (!minimaxApiKey || minimaxApiKey.startsWith('your_')) {
+    return res.status(500).json({
+      error: 'Server configuration error',
+      details: 'MINIMAX_API_KEY is not configured',
+    });
+  }
+
+  try {
+    console.log('Proxying translation to MiniMax:', text.substring(0, 30));
+
+    const response = await fetch(MINIMAX_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${minimaxApiKey}`,
+      },
+      body: JSON.stringify({
+        model: MINIMAX_MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('MiniMax API error:', response.status, errorText);
+      return res.status(response.status).json({
+        error: `MiniMax API error: ${response.status}`,
+        details: errorText,
+      });
+    }
+
+    const data = await response.json();
+    const translated = data.choices?.[0]?.message?.content?.trim();
+    if (!translated) {
+      return res.status(500).json({ error: 'No translation returned from MiniMax' });
+    }
+
+    return res.json({ translated });
+  } catch (error) {
+    console.error('Translation proxy error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.post('/api/generate', async (req, res) => {
   const { text, modelId, durationSeconds, promptInfluence, loop } = req.body;
