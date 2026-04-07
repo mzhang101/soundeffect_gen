@@ -52,6 +52,7 @@ function createEmptyBar() {
     model: 'eleven_text_to_sound_v2',
     promptInfluence: 0.3,
     duration: 5.0,
+    loop: false,
     promptChinese: '',
     status: 'idle',
     audioUrl: null,
@@ -152,6 +153,7 @@ export function GenerationProvider({ children }) {
         modelId: bar.model,
         durationSeconds: bar.duration,
         promptInfluence: bar.promptInfluence,
+        loop: bar.loop,
       }, (progress) => {
         dispatch({ type: 'UPDATE_BAR', id, payload: { progress } });
       });
@@ -202,6 +204,7 @@ export function GenerationProvider({ children }) {
           modelId: bar.model,
           durationSeconds: bar.duration,
           promptInfluence: bar.promptInfluence,
+          loop: bar.loop,
         }, (progress) => {
           dispatch({ type: 'UPDATE_BAR', id: bar.id, payload: { progress } });
         });

@@ -136,6 +136,20 @@ export default function GenerationBar({ bar, index }) {
         </div>
       </div>
 
+      {/* Loop toggle */}
+      <div className="flex items-center gap-3 mb-5">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={bar.loop}
+            onChange={(e) => updateBar(bar.id, { loop: e.target.checked })}
+            className="checkbox"
+          />
+          <span className="text-sm text-[var(--text-secondary)]">Loop</span>
+        </label>
+        <span className="text-xs text-[var(--text-muted)]">— repeat audio continuously</span>
+      </div>
+
       {/* Prompt */}
       <div className="flex gap-3 mb-5">
         <div className="flex-1 relative">
